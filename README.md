@@ -1,4 +1,4 @@
-# Photo Database Local v4
+# Local Photo Database
 
 A lightweight, desktop image browser designed specifically for organizing and viewing photographer portfolios. Built with Electron for cross-platform compatibility.
 
@@ -124,10 +124,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## To-Do
 
 - [ ] Consolidate inspection elements to single toggle
-- [ ] Add keyboard shortcuts
-- [ ] Add refresh button
+- [ ] Keyboard shortcuts
+- [ ] Refresh button
 - [ ] Image transitions
 - [ ] Click to store RGB values
 - [ ] Grid spacing options in Preferences
+- [ ] Colour wheel overlay
+- [ ] Wrap image view behaviour
+
+## Possible To-Do
+
+- [ ] Local storage for image notes, favourites, ordering
 
 *A tool by photographers, for photographers* 🤝
