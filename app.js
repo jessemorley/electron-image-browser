@@ -1,0 +1,722 @@
+class PhotographerBrowser {
+    constructor() {
+        this.currentPath = null;
+        this.currentPhotographer = null;
+        this.photographers = [];
+        this.currentImages = [];
+        this.filteredPhotographers = [];
+        this.currentImageIndex = 0;
+        this.eyedropperActive = false;
+        this.persistentEyedropper = false;
+        this.histogramActive = false;
+        this.persistentHistogram = false;
+        this.histogramData = null;
+        this.currentLuminosity = null;
+        this.init();
+    }
+
+    async init() {
+        this.bindEvents();
+        await this.initializeTheme();
+        await this.initializeHexDisplay();
+        await this.initializeEyedropperState();
+        await this.initializeHistogramState();
+        await this.checkStoredFolder();
+    }
+
+    async initializeTheme() {
+        const savedTheme = await window.electronAPI.getTheme();
+        this.currentTheme = savedTheme;
+        this.applyTheme(savedTheme);
+        
+        // Listen for system theme changes
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async () => {
+                // Re-check the current theme setting
+                const currentTheme = await window.electronAPI.getTheme();
+                if (currentTheme === 'auto') {
+                    this.applyTheme('auto');
+                }
+            });
+        }
+    }
+
+    async toggleHistogram() {
+        if (this.histogramActive) {
+            this.deactivateHistogram();
+            this.persistentHistogram = false;
+            await window.electronAPI.setHistogramActive(false);
+        } else {
+            this.activateHistogram();
+            this.persistentHistogram = true;
+            await window.electronAPI.setHistogramActive(true);
+        }
+    }
+
+    activateHistogram() {
+        this.histogramActive = true;
+        document.getElementById('histogramButton').classList.add('active');
+        document.getElementById('histogramDisplay').classList.add('active');
+        
+        // Generate histogram for current image
+        if (document.getElementById('viewerImage').src) {
+            this.generateHistogram();
+        }
+    }
+
+    deactivateHistogram() {
+        this.histogramActive = false;
+        document.getElementById('histogramButton').classList.remove('active');
+        document.getElementById('histogramDisplay').classList.remove('active');
+        this.histogramData = null;
+    }
+
+    generateHistogram() {
+        const canvas = document.getElementById('viewerCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!canvas.width || !canvas.height) return;
+        
+        // Sample every 4th pixel for performance (adjust as needed)
+        const sampleRate = 4;
+        const histogram = new Array(256).fill(0);
+        let totalPixels = 0;
+        
+        try {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4 * sampleRate) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Calculate luminosity (ITU-R BT.709)
+                const luminosity = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+                histogram[luminosity]++;
+                totalPixels++;
+            }
+            
+            this.histogramData = histogram;
+            this.drawHistogram(histogram, totalPixels, this.currentLuminosity);
+        } catch (error) {
+            console.error('Error generating histogram:', error);
+        }
+    }
+
+    drawHistogram(histogram, totalPixels, luminosity = null) {
+        const canvas = document.getElementById('histogramCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        // Find max value for normalization
+        const maxValue = Math.max(...histogram);
+        if (maxValue === 0) return;
+        
+        // Draw histogram bars
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        
+        for (let i = 0; i < 256; i++) {
+            const barHeight = (histogram[i] / maxValue) * height;
+            const x = i;
+            const y = height - barHeight;
+            
+            ctx.fillRect(x, y, 1, barHeight);
+        }
+        
+        // Draw grid lines for reference
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        
+        // Vertical lines (quarters)
+        for (let i = 1; i < 4; i++) {
+            const x = (width / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        
+        // Horizontal lines (quarters)
+        for (let i = 1; i < 4; i++) {
+            const y = (height / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        
+        // Draw vertical line for current luminosity value if available
+        if (luminosity !== null && luminosity >= 0 && luminosity <= 255) {
+            ctx.strokeStyle = 'rgba(142, 0, 0, 0.9)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(luminosity, 0);
+            ctx.lineTo(luminosity, height);
+            ctx.stroke();
+        }
+    }
+
+    applyTheme(theme) {
+        const body = document.body;
+        
+        if (theme === 'dark') {
+            body.classList.add('dark-mode');
+        } else if (theme === 'light') {
+            body.classList.remove('dark-mode');
+        } else if (theme === 'auto') {
+            // Use system preference
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                body.classList.add('dark-mode');
+            } else {
+                body.classList.remove('dark-mode');
+            }
+        }
+    }
+
+    async checkStoredFolder() {
+        const storedFolder = await window.electronAPI.getStoredFolder();
+        if (storedFolder) {
+            this.currentPath = storedFolder;
+            this.showAppInterface();
+            this.loadPhotographers();
+        } else {
+            this.showInitialSetup();
+        }
+    }
+
+    showInitialSetup() {
+        document.getElementById('initialSetup').classList.remove('hidden');
+        document.getElementById('appInterface').classList.add('hidden');
+    }
+
+    showAppInterface() {
+        document.getElementById('initialSetup').classList.add('hidden');
+        document.getElementById('appInterface').classList.remove('hidden');
+    }
+
+    bindEvents() {
+        // Initial setup
+        document.getElementById('initialSelectButton').addEventListener('click', () => {
+            this.selectFolder(true);
+        });
+
+        // Main interface
+        document.getElementById('backButton').addEventListener('click', () => {
+            // Close image viewer if active, otherwise go back normally
+            if (document.getElementById('imageViewer').classList.contains('active')) {
+                this.closeImageViewer();
+            } else {
+                this.goBack();
+            }
+        });
+
+        document.getElementById('gearButton').addEventListener('click', () => {
+            this.openPreferences();
+        });
+
+        document.getElementById('searchBar').addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+        });
+
+        // Preferences modal
+        document.getElementById('preferencesClose').addEventListener('click', () => {
+            this.closePreferences();
+        });
+
+        document.getElementById('changeFolderButton').addEventListener('click', () => {
+            this.selectFolder(false);
+        });
+
+        document.getElementById('resetFolderButton').addEventListener('click', () => {
+            this.resetFolder();
+        });
+
+        document.getElementById('themeSelector').addEventListener('change', async (e) => {
+            const selectedTheme = e.target.value;
+            this.currentTheme = selectedTheme;
+            await window.electronAPI.setTheme(selectedTheme);
+            this.applyTheme(selectedTheme);
+        });
+
+        document.getElementById('hexToggle').addEventListener('change', async (e) => {
+            const showHex = e.target.checked;
+            await window.electronAPI.setShowHex(showHex);
+            this.updateHexDisplay(showHex);
+        });
+
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            this.closePreferences();
+        });
+
+        document.getElementById('preferencesModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('preferencesModal')) {
+                this.closePreferences();
+            }
+        });
+
+        // Image viewer events
+        document.getElementById('viewerPrev').addEventListener('click', () => {
+            this.showPreviousImage();
+        });
+
+        document.getElementById('viewerNext').addEventListener('click', () => {
+            this.showNextImage();
+        });
+
+        document.getElementById('eyedropperButton').addEventListener('click', () => {
+            this.toggleEyedropper();
+        });
+
+        document.getElementById('histogramButton').addEventListener('click', () => {
+            this.toggleHistogram();
+        });
+
+        document.getElementById('imageViewer').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('imageViewer')) {
+                this.closeImageViewer();
+            }
+        });
+
+        // Keyboard events
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('imageViewer').classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    this.closeImageViewer();
+                } else if (e.key === 'ArrowLeft') {
+                    this.showPreviousImage();
+                } else if (e.key === 'ArrowRight') {
+                    this.showNextImage();
+                }
+            } else if (document.getElementById('preferencesModal').classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    this.closePreferences();
+                }
+            }
+        });
+    }
+
+    async selectFolder(isInitial = false) {
+        const folderPath = await window.electronAPI.selectDirectory();
+        if (folderPath) {
+            this.currentPath = folderPath;
+            this.currentPhotographer = null;
+            
+            if (isInitial) {
+                this.showAppInterface();
+            } else {
+                this.closePreferences();
+            }
+            
+            this.loadPhotographers();
+        }
+    }
+
+    async resetFolder() {
+        await window.electronAPI.clearStoredFolder();
+        this.currentPath = null;
+        this.currentPhotographer = null;
+        this.closePreferences();
+        this.showInitialSetup();
+    }
+
+    openPreferences() {
+        document.getElementById('currentFolderPath').textContent = this.currentPath || 'No folder selected';
+        
+        // Set current theme in selector
+        window.electronAPI.getTheme().then(theme => {
+            document.getElementById('themeSelector').value = theme;
+        });
+        
+        // Set current hex toggle state
+        window.electronAPI.getShowHex().then(showHex => {
+            document.getElementById('hexToggle').checked = showHex;
+        });
+        
+        document.getElementById('preferencesModal').classList.add('active');
+    }
+
+    closePreferences() {
+        document.getElementById('preferencesModal').classList.remove('active');
+    }
+
+    updateHexDisplay(showHex) {
+        const hexValue = document.getElementById('hexValue');
+        if (showHex) {
+            hexValue.classList.add('visible');
+        } else {
+            hexValue.classList.remove('visible');
+        }
+    }
+
+    async initializeHexDisplay() {
+        const showHex = await window.electronAPI.getShowHex();
+        this.updateHexDisplay(showHex);
+    }
+
+    async initializeEyedropperState() {
+        const eyedropperActive = await window.electronAPI.getEyedropperActive();
+        this.persistentEyedropper = eyedropperActive;
+    }
+
+    async loadPhotographers() {
+        this.showLoading(true);
+        this.hideBackButton();
+        
+        document.getElementById('currentPath').textContent = this.currentPath;
+        document.getElementById('searchBar').placeholder = 'Search';
+        document.getElementById('searchBar').value = '';
+
+        try {
+            this.photographers = await window.electronAPI.getPhotographers(this.currentPath);
+            this.filteredPhotographers = [...this.photographers];
+            this.renderPhotographers();
+        } catch (error) {
+            console.error('Error loading photographers:', error);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async loadPhotographerImages(photographer) {
+        this.showLoading(true);
+        this.currentPhotographer = photographer;
+        this.showBackButton();
+        
+        document.getElementById('currentPath').textContent = `${this.currentPath} > ${photographer.name}`;
+        document.getElementById('searchBar').placeholder = 'Search';
+        document.getElementById('searchBar').value = '';
+
+        try {
+            this.currentImages = await window.electronAPI.getImages(photographer.path);
+            this.renderImages();
+        } catch (error) {
+            console.error('Error loading images:', error);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    renderPhotographers() {
+        const grid = document.getElementById('contentGrid');
+        grid.innerHTML = '';
+
+        if (this.filteredPhotographers.length === 0) {
+            this.showNoResults(true);
+            return;
+        }
+
+        this.showNoResults(false);
+
+        this.filteredPhotographers.forEach(photographer => {
+            const card = this.createPhotographerCard(photographer);
+            grid.appendChild(card);
+        });
+    }
+
+    renderImages() {
+        const grid = document.getElementById('contentGrid');
+        grid.innerHTML = '';
+
+        if (this.currentImages.length === 0) {
+            grid.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No images found in this folder.</div>';
+            return;
+        }
+
+        this.currentImages.forEach((image, index) => {
+            const card = this.createImageCard(image, index);
+            grid.appendChild(card);
+        });
+    }
+
+    createPhotographerCard(photographer) {
+        const card = document.createElement('div');
+        card.className = 'photographer-card';
+        
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'card-image';
+        
+        if (photographer.previewImage) {
+            const img = document.createElement('img');
+            img.src = `file://${photographer.previewImage}`;
+            img.onerror = () => {
+                imageDiv.innerHTML = 'No preview available';
+            };
+            imageDiv.appendChild(img);
+        } else {
+            imageDiv.textContent = 'No preview available';
+        }
+        
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.textContent = photographer.name;
+        
+        card.appendChild(imageDiv);
+        card.appendChild(title);
+        
+        card.addEventListener('click', () => {
+            this.loadPhotographerImages(photographer);
+        });
+        
+        return card;
+    }
+
+    createImageCard(image, index) {
+        const card = document.createElement('div');
+        card.className = 'image-card';
+        
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'card-image';
+        
+        const img = document.createElement('img');
+        img.src = `file://${image.path}`;
+        img.onerror = () => {
+            imageDiv.innerHTML = 'Unable to load image';
+        };
+        imageDiv.appendChild(img);
+        
+        card.appendChild(imageDiv);
+        
+        card.addEventListener('click', () => {
+            this.openImageViewer(index);
+        });
+        
+        return card;
+    }
+
+    async initializeHistogramState() {
+        const histogramActive = await window.electronAPI.getHistogramActive();
+        this.persistentHistogram = histogramActive;
+    }
+
+    openImageViewer(index) {
+        this.currentImageIndex = index;
+        const image = this.currentImages[index];
+        const viewerImage = document.getElementById('viewerImage');
+        viewerImage.src = `file://${image.path}`;
+        
+        // Show eyedropper and histogram buttons in menu
+        document.getElementById('eyedropperButton').classList.remove('hidden');
+        document.getElementById('histogramButton').classList.remove('hidden');
+        
+        // Setup canvas when image loads
+        viewerImage.onload = () => {
+            this.setupCanvas();
+        };
+        
+        document.getElementById('imageViewer').classList.add('active');
+        
+        // Restore persistent states
+        if (this.persistentEyedropper) {
+            this.activateEyedropper();
+        }
+        if (this.persistentHistogram) {
+            this.activateHistogram();
+        }
+    }
+
+    closeImageViewer() {
+        document.getElementById('imageViewer').classList.remove('active');
+        
+        // Hide eyedropper and histogram buttons in menu
+        document.getElementById('eyedropperButton').classList.add('hidden');
+        document.getElementById('histogramButton').classList.add('hidden');
+        
+        this.deactivateEyedropper();
+        this.deactivateHistogram();
+    }
+
+    setupCanvas() {
+        const viewerImage = document.getElementById('viewerImage');
+        const canvas = document.getElementById('viewerCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to match displayed image
+        const rect = viewerImage.getBoundingClientRect();
+        canvas.width = viewerImage.naturalWidth;
+        canvas.height = viewerImage.naturalHeight;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        canvas.style.position = 'absolute';
+        canvas.style.left = (rect.left - viewerImage.closest('.viewer-main').getBoundingClientRect().left) + 'px';
+        canvas.style.top = (rect.top - viewerImage.closest('.viewer-main').getBoundingClientRect().top) + 'px';
+        
+        // Draw image to canvas
+        ctx.drawImage(viewerImage, 0, 0);
+        
+        // Generate histogram if active
+        if (this.histogramActive) {
+            this.generateHistogram();
+        }
+    }
+
+    async toggleEyedropper() {
+        if (this.eyedropperActive) {
+            this.deactivateEyedropper();
+            this.persistentEyedropper = false;
+            await window.electronAPI.setEyedropperActive(false);
+        } else {
+            this.activateEyedropper();
+            this.persistentEyedropper = true;
+            await window.electronAPI.setEyedropperActive(true);
+        }
+    }
+
+    activateEyedropper() {
+        this.eyedropperActive = true;
+        document.getElementById('eyedropperButton').classList.add('active');
+        document.getElementById('rgbDisplay').classList.add('active');
+        
+        const viewerImage = document.getElementById('viewerImage');
+        viewerImage.style.cursor = 'crosshair';
+        
+        // Add mouse move listener
+        this.mouseMoveHandler = (e) => this.handleMouseMove(e);
+        viewerImage.addEventListener('mousemove', this.mouseMoveHandler);
+    }
+
+    deactivateEyedropper() {
+        this.eyedropperActive = false;
+        document.getElementById('eyedropperButton').classList.remove('active');
+        document.getElementById('rgbDisplay').classList.remove('active');
+        
+        const viewerImage = document.getElementById('viewerImage');
+        viewerImage.style.cursor = 'default';
+        
+        // Remove mouse move listener
+        if (this.mouseMoveHandler) {
+            viewerImage.removeEventListener('mousemove', this.mouseMoveHandler);
+        }
+        
+        // Clear luminosity tracking and redraw histogram without line
+        this.currentLuminosity = null;
+        if (this.histogramActive && this.histogramData) {
+            this.drawHistogram(this.histogramData, null, null);
+        }
+    }
+
+    handleMouseMove(e) {
+        const viewerImage = document.getElementById('viewerImage');
+        const canvas = document.getElementById('viewerCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Get mouse position relative to image
+        const rect = viewerImage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Convert to canvas coordinates
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const canvasX = Math.floor(x * scaleX);
+        const canvasY = Math.floor(y * scaleY);
+        
+        // Get pixel data
+        if (canvasX >= 0 && canvasX < canvas.width && canvasY >= 0 && canvasY < canvas.height) {
+            const imageData = ctx.getImageData(canvasX, canvasY, 1, 1);
+            const data = imageData.data;
+            const r = data[0];
+            const g = data[1];
+            const b = data[2];
+            
+            // Calculate luminosity (ITU-R BT.709)
+            const luminosity = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+            
+            // Store current luminosity for histogram line
+            this.currentLuminosity = luminosity;
+            
+            // Convert to hex
+            const hex = '#' + [r, g, b].map(x => {
+                const hexValue = x.toString(16);
+                return hexValue.length === 1 ? '0' + hexValue : hexValue;
+            }).join('').toUpperCase();
+            
+            // Update RGB display - colors are now fixed via CSS classes
+            document.getElementById('rValue').textContent = r;
+            document.getElementById('gValue').textContent = g;
+            document.getElementById('bValue').textContent = b;
+            document.getElementById('lValue').textContent = luminosity;
+            document.getElementById('hexValue').textContent = hex;
+            
+            // Redraw histogram with luminosity line if histogram is active
+            if (this.histogramActive && this.histogramData) {
+                this.drawHistogram(this.histogramData, null, luminosity);
+            }
+        }
+    }
+
+    showPreviousImage() {
+        if (this.currentImageIndex > 0) {
+            this.currentImageIndex--;
+            const image = this.currentImages[this.currentImageIndex];
+            const viewerImage = document.getElementById('viewerImage');
+            viewerImage.src = `file://${image.path}`;
+            
+            // Refresh canvas when image loads
+            viewerImage.onload = () => {
+                this.setupCanvas();
+            };
+        }
+    }
+
+    showNextImage() {
+        if (this.currentImageIndex < this.currentImages.length - 1) {
+            this.currentImageIndex++;
+            const image = this.currentImages[this.currentImageIndex];
+            const viewerImage = document.getElementById('viewerImage');
+            viewerImage.src = `file://${image.path}`;
+            
+            // Refresh canvas when image loads
+            viewerImage.onload = () => {
+                this.setupCanvas();
+            };
+        }
+    }
+
+    handleSearch(query) {
+        if (this.currentPhotographer) {
+            // Searching images - you can implement this if needed
+            return;
+        }
+
+        // Searching photographers
+        if (!query.trim()) {
+            this.filteredPhotographers = [...this.photographers];
+        } else {
+            this.filteredPhotographers = this.photographers.filter(photographer =>
+                photographer.name.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+        this.renderPhotographers();
+    }
+
+    goBack() {
+        if (this.currentPhotographer) {
+            this.currentPhotographer = null;
+            this.loadPhotographers();
+        }
+    }
+
+    showBackButton() {
+        document.getElementById('backButton').classList.add('visible');
+    }
+
+    hideBackButton() {
+        document.getElementById('backButton').classList.remove('visible');
+    }
+
+    showLoading(show) {
+        document.getElementById('loadingMessage').classList.toggle('hidden', !show);
+    }
+
+    showNoResults(show) {
+        document.getElementById('noResults').classList.toggle('hidden', !show);
+    }
+}
+
+// Initialize the app
+const app = new PhotographerBrowser();
