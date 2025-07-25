@@ -276,8 +276,8 @@ class PhotographerBrowser {
             this.toggleHistogram();
         });
 
-        document.getElementById('revealButton').addEventListener('click', () => {
-            this.revealCurrentImageInFinder();
+        document.getElementById('revealFolderButton').addEventListener('click', () => {
+            this.revealInFinder();
         });
 
         document.getElementById('imageViewer').addEventListener('click', (e) => {
@@ -376,6 +376,9 @@ class PhotographerBrowser {
         
         // Update search context to photographer search
         this.updateSearchContext(false);
+        
+        // Hide reveal folder button for photographer list view
+        document.getElementById('revealFolderButton').classList.add('hidden');
 
         try {
             this.photographers = await window.electronAPI.getPhotographers(this.currentPath);
@@ -398,6 +401,9 @@ class PhotographerBrowser {
         
         // Update search context to photographer view
         this.updateSearchContext(true, photographer.name);
+        
+        // Show reveal folder button for photographer view
+        document.getElementById('revealFolderButton').classList.remove('hidden');
 
         try {
             this.currentImages = await window.electronAPI.getImages(photographer.path);
@@ -507,8 +513,8 @@ class PhotographerBrowser {
         const viewerImage = document.getElementById('viewerImage');
         viewerImage.src = `file://${image.path}`;
         
-        // Show eyedropper, histogram, and reveal buttons in menu
-        document.getElementById('revealButton').classList.remove('hidden');
+        // Show reveal folder, eyedropper, and histogram buttons in menu
+        document.getElementById('revealFolderButton').classList.remove('hidden');
         document.getElementById('eyedropperButton').classList.remove('hidden');
         document.getElementById('histogramButton').classList.remove('hidden');
         
@@ -531,8 +537,7 @@ class PhotographerBrowser {
     closeImageViewer() {
         document.getElementById('imageViewer').classList.remove('active');
         
-        // Hide eyedropper, histogram, and reveal buttons in menu
-        document.getElementById('revealButton').classList.add('hidden');
+        // Hide eyedropper and histogram buttons in menu (keep reveal folder visible)
         document.getElementById('eyedropperButton').classList.add('hidden');
         document.getElementById('histogramButton').classList.add('hidden');
         
@@ -540,10 +545,17 @@ class PhotographerBrowser {
         this.deactivateHistogram();
     }
 
-    async revealCurrentImageInFinder() {
-        if (this.currentImages && this.currentImages[this.currentImageIndex]) {
+    async revealInFinder() {
+        // Check if we're viewing a single image
+        const imageViewerActive = document.getElementById('imageViewer').classList.contains('active');
+        
+        if (imageViewerActive && this.currentImages && this.currentImages[this.currentImageIndex]) {
+            // Reveal the specific image file
             const currentImage = this.currentImages[this.currentImageIndex];
             await window.electronAPI.revealInFinder(currentImage.path);
+        } else if (this.currentPhotographer) {
+            // Reveal the photographer folder
+            await window.electronAPI.revealInFinder(this.currentPhotographer.path);
         }
     }
 
@@ -552,13 +564,19 @@ class PhotographerBrowser {
         const searchBar = document.getElementById('searchBar');
         
         if (isPhotographerView && photographerName) {
-            // Switch to user icon and photographer name as placeholder
+            // Switch to user icon and photographer name as display
             searchIcon.innerHTML = '<path d="m7.5.5c1.65685425 0 3 1.34314575 3 3v2c0 1.65685425-1.34314575 3-3 3s-3-1.34314575-3-3v-2c0-1.65685425 1.34314575-3 3-3zm7 14v-.7281753c0-3.1864098-3.6862915-5.2718247-7-5.2718247s-7 2.0854149-7 5.2718247v.7281753c0 .5522847.44771525 1 1 1h12c.5522847 0 1-.4477153 1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(3 2)"/>';
-            searchBar.placeholder = photographerName;
+            searchBar.value = photographerName;
+            searchBar.placeholder = '';
+            searchBar.readOnly = true;
+            searchBar.style.cursor = 'default';
         } else {
-            // Switch back to search icon and "Search" placeholder
+            // Switch back to search icon and editable search
             searchIcon.innerHTML = '<g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5"/><path d="m17.571 17.5-5.571-5.5"/></g>';
+            searchBar.value = '';
             searchBar.placeholder = 'Search';
+            searchBar.readOnly = false;
+            searchBar.style.cursor = 'text';
         }
     }
 
@@ -731,6 +749,8 @@ class PhotographerBrowser {
             this.currentPhotographer = null;
             // Update search context back to photographer search
             this.updateSearchContext(false);
+            // Hide reveal folder button
+            document.getElementById('revealFolderButton').classList.add('hidden');
             this.loadPhotographers();
         }
     }

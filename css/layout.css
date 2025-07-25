@@ -127,6 +127,17 @@ body.dark-mode .search-bar:focus {
     box-shadow: 0 0 0 2px #007AFF;
 }
 
+.search-bar[readonly] {
+    background: #f8f8f8;
+    color: #666;
+    cursor: default !important;
+}
+
+body.dark-mode .search-bar[readonly] {
+    background: #2a2a2a;
+    color: #aaa;
+}
+
 .search-bar::placeholder {
     color: #999;
 }
