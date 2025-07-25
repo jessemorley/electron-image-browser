@@ -372,8 +372,10 @@ class PhotographerBrowser {
         this.hideBackButton();
         
         document.getElementById('currentPath').textContent = this.currentPath;
-        document.getElementById('searchBar').placeholder = 'Search';
         document.getElementById('searchBar').value = '';
+        
+        // Update search context to photographer search
+        this.updateSearchContext(false);
 
         try {
             this.photographers = await window.electronAPI.getPhotographers(this.currentPath);
@@ -392,8 +394,10 @@ class PhotographerBrowser {
         this.showBackButton();
         
         document.getElementById('currentPath').textContent = `${this.currentPath} > ${photographer.name}`;
-        document.getElementById('searchBar').placeholder = 'Search';
         document.getElementById('searchBar').value = '';
+        
+        // Update search context to photographer view
+        this.updateSearchContext(true, photographer.name);
 
         try {
             this.currentImages = await window.electronAPI.getImages(photographer.path);
@@ -540,6 +544,21 @@ class PhotographerBrowser {
         if (this.currentImages && this.currentImages[this.currentImageIndex]) {
             const currentImage = this.currentImages[this.currentImageIndex];
             await window.electronAPI.revealInFinder(currentImage.path);
+        }
+    }
+
+    updateSearchContext(isPhotographerView = false, photographerName = '') {
+        const searchIcon = document.querySelector('.search-icon');
+        const searchBar = document.getElementById('searchBar');
+        
+        if (isPhotographerView && photographerName) {
+            // Switch to user icon and photographer name as placeholder
+            searchIcon.innerHTML = '<path d="m7.5.5c1.65685425 0 3 1.34314575 3 3v2c0 1.65685425-1.34314575 3-3 3s-3-1.34314575-3-3v-2c0-1.65685425 1.34314575-3 3-3zm7 14v-.7281753c0-3.1864098-3.6862915-5.2718247-7-5.2718247s-7 2.0854149-7 5.2718247v.7281753c0 .5522847.44771525 1 1 1h12c.5522847 0 1-.4477153 1-1z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(3 2)"/>';
+            searchBar.placeholder = photographerName;
+        } else {
+            // Switch back to search icon and "Search" placeholder
+            searchIcon.innerHTML = '<g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5"/><path d="m17.571 17.5-5.571-5.5"/></g>';
+            searchBar.placeholder = 'Search';
         }
     }
 
@@ -710,6 +729,8 @@ class PhotographerBrowser {
     goBack() {
         if (this.currentPhotographer) {
             this.currentPhotographer = null;
+            // Update search context back to photographer search
+            this.updateSearchContext(false);
             this.loadPhotographers();
         }
     }
