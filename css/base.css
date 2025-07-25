@@ -24,7 +24,7 @@ body.dark-mode {
 
 /* Unified menu button style */
 .menu-button {
-    background: #f0f0f0;
+    background: transparent;
     color: #666;
     border: none;
     padding: 0;
@@ -49,12 +49,11 @@ body.dark-mode {
 }
 
 .menu-button.active {
-    background: #007AFF;
-    color: white;
+    color: #007AFF;
 }
 
 body.dark-mode .menu-button {
-    background: #333333;
+    background: transparent;
     color: #cccccc;
 }
 
@@ -63,8 +62,7 @@ body.dark-mode .menu-button:hover {
 }
 
 body.dark-mode .menu-button.active {
-    background: #007AFF;
-    color: white;
+    color: #007AFF;
 }
 
 /* SVG icon styling within menu buttons */
@@ -73,4 +71,36 @@ body.dark-mode .menu-button.active {
     height: 18px;
     stroke: currentColor;
     pointer-events: none;
+}
+
+/* Scrollbar styling for light mode */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Scrollbar styling for dark mode */
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #555555;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #777777;
 }
