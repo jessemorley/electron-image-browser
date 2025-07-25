@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const Store = require('electron-store');
@@ -105,6 +105,11 @@ ipcMain.handle('get-histogram-active', () => {
 
 ipcMain.handle('set-histogram-active', (event, active) => {
   store.set('histogramActive', active);
+  return true;
+});
+
+ipcMain.handle('reveal-in-finder', (event, filePath) => {
+  shell.showItemInFolder(filePath);
   return true;
 });
 

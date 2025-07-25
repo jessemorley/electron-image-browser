@@ -276,6 +276,10 @@ class PhotographerBrowser {
             this.toggleHistogram();
         });
 
+        document.getElementById('revealButton').addEventListener('click', () => {
+            this.revealCurrentImageInFinder();
+        });
+
         document.getElementById('imageViewer').addEventListener('click', (e) => {
             if (e.target === document.getElementById('imageViewer')) {
                 this.closeImageViewer();
@@ -499,7 +503,8 @@ class PhotographerBrowser {
         const viewerImage = document.getElementById('viewerImage');
         viewerImage.src = `file://${image.path}`;
         
-        // Show eyedropper and histogram buttons in menu
+        // Show eyedropper, histogram, and reveal buttons in menu
+        document.getElementById('revealButton').classList.remove('hidden');
         document.getElementById('eyedropperButton').classList.remove('hidden');
         document.getElementById('histogramButton').classList.remove('hidden');
         
@@ -522,12 +527,20 @@ class PhotographerBrowser {
     closeImageViewer() {
         document.getElementById('imageViewer').classList.remove('active');
         
-        // Hide eyedropper and histogram buttons in menu
+        // Hide eyedropper, histogram, and reveal buttons in menu
+        document.getElementById('revealButton').classList.add('hidden');
         document.getElementById('eyedropperButton').classList.add('hidden');
         document.getElementById('histogramButton').classList.add('hidden');
         
         this.deactivateEyedropper();
         this.deactivateHistogram();
+    }
+
+    async revealCurrentImageInFinder() {
+        if (this.currentImages && this.currentImages[this.currentImageIndex]) {
+            const currentImage = this.currentImages[this.currentImageIndex];
+            await window.electronAPI.revealInFinder(currentImage.path);
+        }
     }
 
     setupCanvas() {
