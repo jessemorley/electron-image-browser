@@ -22,38 +22,6 @@ A lightweight, desktop image browser designed specifically for organizing and vi
 - **Responsive Design**: Adapts to different screen sizes
 - **Persistent Settings**: Remembers your preferences between sessions
 
-## Screenshots
-
-*Add screenshots of your application here*
-
-## Installation
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-
-### Setup
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/photo-database-local.git
-   cd photo-database-local
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the application:
-   ```bash
-   npm start
-   ```
-
-### Development Mode
-```bash
-npm run dev
-```
-
 ## Usage
 
 ### Initial Setup
@@ -102,20 +70,6 @@ Photography Folder/
 
 ## Technical Details
 
-### Built With
-- **Electron** - Desktop application framework
-- **JavaScript** - Core application logic
-- **HTML5 Canvas** - Image processing and histogram generation
-- **CSS3** - Modern styling with dark mode support
-- **Sharp** - High-performance image processing
-
-### Architecture
-- `main.js` - Electron main process
-- `app.js` - Application logic and UI handling
-- `preload.js` - Secure IPC communication
-- `css/` - Modular stylesheets (base, layout, components)
-- `icons/` - SVG icon collection
-
 ### Key Features Implementation
 - **Real-time Color Sampling**: Uses HTML5 Canvas ImageData API
 - **Histogram Generation**: ITU-R BT.709 luminosity calculation
@@ -141,13 +95,6 @@ Supports common image formats:
 | `Space` | Toggle eyedropper |
 | `H` | Toggle histogram |
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## Development
 
@@ -166,12 +113,6 @@ photo-database-local-v4/
 └── package.json         # Dependencies and scripts
 ```
 
-### Code Style
-- Modern JavaScript (ES6+)
-- Modular CSS architecture
-- Semantic HTML structure
-- Progressive enhancement
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -180,12 +121,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Jesse Morley**
 
-## Acknowledgments
+## To-Do
 
-- Icons from the included SVG icon set
-- Built with Electron framework
-- Image processing powered by Sharp
+- [ ] Consolidate inspection elements to single toggle
+- [ ] Add keyboard shortcuts
+- [ ] Add refresh button
+- [ ] Image transitions
+- [ ] Click to store RGB values
+- [ ] Grid spacing options in Preferences
 
----
-
-*A tool by photographers, for photographers* 📸
+*A tool by photographers, for photographers* 🤝
