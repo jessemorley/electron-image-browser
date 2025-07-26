@@ -13,14 +13,38 @@
     border-radius: 0;
     overflow: hidden;
     box-shadow: none;
+    border: 1px solid black;
+    border-right: none;
+    border-bottom: none;
     transition: background-color 0.3s, transform 0.1s ease;
     cursor: pointer;
     margin: 0;
 }
 
+.photographer-card:last-child,
+.image-card:last-child {
+    border-right: 1px solid black;
+}
+
+.grid .photographer-card:nth-last-child(-n+4),
+.grid .image-card:nth-last-child(-n+4) {
+    border-bottom: 1px solid black;
+}
+
 body.dark-mode .photographer-card,
 body.dark-mode .image-card {
     background: #222222;
+    border-color: white;
+}
+
+body.dark-mode .photographer-card:last-child,
+body.dark-mode .image-card:last-child {
+    border-right-color: white;
+}
+
+body.dark-mode .grid .photographer-card:nth-last-child(-n+4),
+body.dark-mode .grid .image-card:nth-last-child(-n+4) {
+    border-bottom-color: white;
 }
 
 .photographer-card:hover, .image-card:hover {
@@ -55,7 +79,7 @@ body.dark-mode .image-card {
 .card-title {
     padding: 15px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 700;
     text-align: center;
     transition: color 0.3s;
 }
