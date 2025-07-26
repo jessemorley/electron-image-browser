@@ -449,12 +449,12 @@ class PhotographerBrowser {
             // Phase 2: Fade out other cards and wait for completion (250ms)
             await this.fadeOutOtherCards(clickedCard);
             
-            // Phase 3: Reset scroll position to top first
-            this.resetScrollPosition();
-            
-            // Phase 4: Slide clicked card to viewport top-left position (now at correct scroll position)
+            // Phase 3: Slide card to top-left position first
             const firstCardPosition = this.getFirstCardPosition();
             await this.slideCardToFirstPosition(clickedCard, firstCardPosition);
+            
+            // Phase 4: Then reset scroll position
+            this.resetScrollPosition();
             
             // Phase 5: Load images and update UI state
             this.currentPhotographer = photographer;
@@ -878,6 +878,7 @@ class PhotographerBrowser {
         window.scrollTo(0, 0);
     }
 
+
     cleanupAnimationClasses() {
         // Remove any animation classes that might be left behind
         const allCards = document.querySelectorAll('.photographer-card, .image-card');
@@ -995,8 +996,14 @@ class PhotographerBrowser {
             const deltaX = targetPosition.x - cardRect.left;
             const deltaY = targetPosition.y - cardRect.top;
             
-            clickedCard.style.transform = `translateX(${deltaX}px) translateY(${deltaY}px)`;
+            // First add the class to enable transition
             clickedCard.classList.add('card-slide-to-first');
+            
+            // Force a reflow to ensure the transition is ready
+            clickedCard.offsetHeight;
+            
+            // Then apply the transform to trigger the transition
+            clickedCard.style.transform = `translateX(${deltaX}px) translateY(${deltaY}px)`;
             
             // Wait for slide animation to complete
             setTimeout(resolve, 500);
