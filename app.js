@@ -453,6 +453,9 @@ class PhotographerBrowser {
             const firstCardPosition = this.getFirstCardPosition();
             await this.slideCardToFirstPosition(clickedCard, firstCardPosition);
             
+            // Phase 4: Reset scroll position to top immediately after slide
+            this.resetScrollPosition();
+            
             // Phase 5: Load images and update UI state
             this.currentPhotographer = photographer;
             this.showBackButton();
@@ -864,6 +867,15 @@ class PhotographerBrowser {
             
             this.loadPhotographers();
         }
+    }
+
+    resetScrollPosition() {
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.scrollTop = 0;
+        }
+        // Also reset window scroll as fallback
+        window.scrollTo(0, 0);
     }
 
     cleanupAnimationClasses() {
