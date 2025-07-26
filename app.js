@@ -446,14 +446,14 @@ class PhotographerBrowser {
             // Phase 1: Fade out clicked card's title immediately
             this.fadeOutClickedCardTitle(clickedCard);
             
-            // Phase 2: Fade out other cards and wait for completion
+            // Phase 2: Fade out other cards and wait for completion (250ms)
             await this.fadeOutOtherCards(clickedCard);
             
-            // Phase 3: Slide clicked card to first position
+            // Phase 3: Slide clicked card to viewport top-left position
             const firstCardPosition = this.getFirstCardPosition();
             await this.slideCardToFirstPosition(clickedCard, firstCardPosition);
             
-            // Phase 4: Load images and update UI state
+            // Phase 5: Load images and update UI state
             this.currentPhotographer = photographer;
             this.showBackButton();
             document.getElementById('currentPath').textContent = `${this.currentPath} > ${photographer.name}`;
@@ -464,7 +464,7 @@ class PhotographerBrowser {
             // Load images data
             this.currentImages = await window.electronAPI.getImages(photographer.path);
             
-            // Phase 5: Render and fade in new images
+            // Phase 6: Render and fade in new images
             await this.renderImagesAnimated();
             
         } catch (error) {
@@ -949,6 +949,7 @@ class PhotographerBrowser {
         clickedCard.classList.add('card-disable-hover');
     }
 
+
     async fadeOutOtherCards(clickedCard) {
         return new Promise((resolve) => {
             const allCards = document.querySelectorAll('.photographer-card');
@@ -964,13 +965,15 @@ class PhotographerBrowser {
         });
     }
 
+
     getFirstCardPosition() {
-        const grid = document.getElementById('contentGrid');
-        const gridRect = grid.getBoundingClientRect();
+        const mainContent = document.querySelector('.main-content');
+        const mainContentRect = mainContent.getBoundingClientRect();
         
+        // Get the exact top-left position of the currently visible area within main-content
         return {
-            x: gridRect.left,
-            y: gridRect.top
+            x: mainContentRect.left,
+            y: mainContentRect.top
         };
     }
 
@@ -1004,7 +1007,6 @@ class PhotographerBrowser {
             if (index === 0) {
                 // First card (transformed from clicked card) - show immediately without animation
                 card.style.opacity = '1';
-                card.style.transform = 'none';
             } else {
                 // Other cards - start hidden for fade-in animation
                 card.style.opacity = '0';
