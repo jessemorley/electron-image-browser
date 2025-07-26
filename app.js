@@ -449,12 +449,12 @@ class PhotographerBrowser {
             // Phase 2: Fade out other cards and wait for completion (250ms)
             await this.fadeOutOtherCards(clickedCard);
             
-            // Phase 3: Slide clicked card to viewport top-left position
+            // Phase 3: Reset scroll position to top first
+            this.resetScrollPosition();
+            
+            // Phase 4: Slide clicked card to viewport top-left position (now at correct scroll position)
             const firstCardPosition = this.getFirstCardPosition();
             await this.slideCardToFirstPosition(clickedCard, firstCardPosition);
-            
-            // Phase 4: Reset scroll position to top immediately after slide
-            this.resetScrollPosition();
             
             // Phase 5: Load images and update UI state
             this.currentPhotographer = photographer;
@@ -1012,7 +1012,8 @@ class PhotographerBrowser {
             return;
         }
 
-        // Create all image cards
+        // Create all image cards at once to prevent layout shifts
+        const fragment = document.createDocumentFragment();
         const cards = this.currentImages.map((image, index) => {
             const card = this.createImageCard(image, index);
             
@@ -1025,11 +1026,12 @@ class PhotographerBrowser {
                 card.style.transform = 'translateY(10px)';
             }
             
+            fragment.appendChild(card);
             return card;
         });
 
-        // Add cards to grid
-        cards.forEach(card => grid.appendChild(card));
+        // Add all cards to grid at once to prevent layout recalculation
+        grid.appendChild(fragment);
 
         // Small delay to ensure DOM is ready, then trigger staggered fade-in for cards after the first
         return new Promise((resolve) => {
