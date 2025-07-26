@@ -287,7 +287,14 @@ class PhotographerBrowser {
         this.setupHistogramDragging();
 
         document.getElementById('imageViewer').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('imageViewer')) {
+            const viewerImage = document.getElementById('viewerImage');
+            const histogramDisplay = document.getElementById('histogramDisplay');
+            const rgbDisplay = document.getElementById('rgbDisplay');
+            
+            // Close if clicking outside the image, but not on histogram or RGB display
+            if (e.target !== viewerImage && 
+                !histogramDisplay.contains(e.target) && 
+                !rgbDisplay.contains(e.target)) {
                 this.closeImageViewer();
             }
         });
