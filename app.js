@@ -15,6 +15,7 @@ class PhotographerBrowser {
         this.currentGalleryStyle = 'default'; // Initialize with default style
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
+        this.isAnimating = false; // Prevent multiple clicks during transitions
         this.init();
     }
 
@@ -437,6 +438,44 @@ class PhotographerBrowser {
         }
     }
 
+    async loadPhotographerImagesAnimated(photographer, clickedCard) {
+        if (this.isAnimating) return;
+        this.isAnimating = true;
+
+        try {
+            // Phase 1: Fade out clicked card's title immediately
+            this.fadeOutClickedCardTitle(clickedCard);
+            
+            // Phase 2: Fade out other cards and wait for completion
+            await this.fadeOutOtherCards(clickedCard);
+            
+            // Phase 3: Slide clicked card to first position
+            const firstCardPosition = this.getFirstCardPosition();
+            await this.slideCardToFirstPosition(clickedCard, firstCardPosition);
+            
+            // Phase 4: Load images and update UI state
+            this.currentPhotographer = photographer;
+            this.showBackButton();
+            document.getElementById('currentPath').textContent = `${this.currentPath} > ${photographer.name}`;
+            document.getElementById('searchBar').value = '';
+            this.updateSearchContext(true, photographer.name);
+            document.getElementById('revealFolderButton').classList.remove('hidden');
+            
+            // Load images data
+            this.currentImages = await window.electronAPI.getImages(photographer.path);
+            
+            // Phase 5: Render and fade in new images
+            await this.renderImagesAnimated();
+            
+        } catch (error) {
+            console.error('Error loading images with animation:', error);
+            // Fallback to regular loading
+            this.loadPhotographerImages(photographer);
+        } finally {
+            this.isAnimating = false;
+        }
+    }
+
     renderPhotographers() {
         const grid = document.getElementById('contentGrid');
         grid.innerHTML = '';
@@ -502,8 +541,9 @@ class PhotographerBrowser {
             card.appendChild(title);
         }
         
-        card.addEventListener('click', () => {
-            this.loadPhotographerImages(photographer);
+        card.addEventListener('click', (e) => {
+            if (this.isAnimating) return; // Prevent multiple clicks during animation
+            this.loadPhotographerImagesAnimated(photographer, card);
         });
         
         return card;
@@ -817,8 +857,30 @@ class PhotographerBrowser {
             this.updateSearchContext(false);
             // Hide reveal folder button
             document.getElementById('revealFolderButton').classList.add('hidden');
+            
+            // Reset animation state and clean up any animation classes
+            this.isAnimating = false;
+            this.cleanupAnimationClasses();
+            
             this.loadPhotographers();
         }
+    }
+
+    cleanupAnimationClasses() {
+        // Remove any animation classes that might be left behind
+        const allCards = document.querySelectorAll('.photographer-card, .image-card');
+        allCards.forEach(card => {
+            card.classList.remove('card-fade-out', 'card-slide-to-first', 'card-fade-in', 'card-fade-in-staggered', 'card-disable-hover');
+            card.style.transform = '';
+            card.style.animationDelay = '';
+            card.style.opacity = '';
+            
+            // Clean up title fade classes
+            const cardTitle = card.querySelector('.card-title');
+            if (cardTitle) {
+                cardTitle.classList.remove('card-title-fade-out');
+            }
+        });
     }
 
     showBackButton() {
@@ -874,6 +936,112 @@ class PhotographerBrowser {
 
         document.addEventListener('mouseup', () => {
             this.isDragging = false;
+        });
+    }
+
+    // Animation helper methods
+    fadeOutClickedCardTitle(clickedCard) {
+        const cardTitle = clickedCard.querySelector('.card-title');
+        if (cardTitle) {
+            cardTitle.classList.add('card-title-fade-out');
+        }
+        // Also disable hover effects on the clicked card
+        clickedCard.classList.add('card-disable-hover');
+    }
+
+    async fadeOutOtherCards(clickedCard) {
+        return new Promise((resolve) => {
+            const allCards = document.querySelectorAll('.photographer-card');
+            
+            allCards.forEach(card => {
+                if (card !== clickedCard) {
+                    card.classList.add('card-fade-out');
+                }
+            });
+            
+            // Wait for fade animation to complete (250ms)
+            setTimeout(resolve, 250);
+        });
+    }
+
+    getFirstCardPosition() {
+        const grid = document.getElementById('contentGrid');
+        const gridRect = grid.getBoundingClientRect();
+        
+        return {
+            x: gridRect.left,
+            y: gridRect.top
+        };
+    }
+
+    async slideCardToFirstPosition(clickedCard, targetPosition) {
+        return new Promise((resolve) => {
+            const cardRect = clickedCard.getBoundingClientRect();
+            const deltaX = targetPosition.x - cardRect.left;
+            const deltaY = targetPosition.y - cardRect.top;
+            
+            clickedCard.style.transform = `translateX(${deltaX}px) translateY(${deltaY}px)`;
+            clickedCard.classList.add('card-slide-to-first');
+            
+            // Wait for slide animation to complete
+            setTimeout(resolve, 400);
+        });
+    }
+
+    async renderImagesAnimated() {
+        const grid = document.getElementById('contentGrid');
+        grid.innerHTML = '';
+
+        if (this.currentImages.length === 0) {
+            grid.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No images found in this folder.</div>';
+            return;
+        }
+
+        // Create all image cards
+        const cards = this.currentImages.map((image, index) => {
+            const card = this.createImageCard(image, index);
+            
+            if (index === 0) {
+                // First card (transformed from clicked card) - show immediately without animation
+                card.style.opacity = '1';
+                card.style.transform = 'none';
+            } else {
+                // Other cards - start hidden for fade-in animation
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
+            }
+            
+            return card;
+        });
+
+        // Add cards to grid
+        cards.forEach(card => grid.appendChild(card));
+
+        // Small delay to ensure DOM is ready, then trigger staggered fade-in for cards after the first
+        return new Promise((resolve) => {
+            if (cards.length <= 1) {
+                // If only one card, resolve immediately
+                setTimeout(resolve, 50);
+                return;
+            }
+            
+            setTimeout(() => {
+                cards.forEach((card, index) => {
+                    if (index === 0) {
+                        // Skip animation for first card
+                        return;
+                    }
+                    
+                    setTimeout(() => {
+                        card.classList.add('card-fade-in-staggered');
+                        
+                        // Resolve when last card animation completes
+                        if (index === cards.length - 1) {
+                            setTimeout(resolve, 300);
+                        }
+                    }, (index - 1) * 50); // Adjust timing since we skip index 0
+                });
+            }, 50); // Small delay to prevent flicker
         });
     }
 }

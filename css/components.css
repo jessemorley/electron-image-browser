@@ -15,7 +15,7 @@
     border-radius: 0;
     overflow: hidden;
     box-shadow: none;
-    transition: background-color 0.3s, transform 0.1s ease;
+    transition: background-color 0.3s, transform 0.1s ease, opacity 0.3s ease;
     cursor: pointer;
     margin: 0;
 }
@@ -30,7 +30,7 @@
     border: 1px solid black;
     border-right: none;
     border-bottom: none;
-    transition: background-color 0.3s, transform 0.1s ease;
+    transition: background-color 0.3s, transform 0.1s ease, opacity 0.3s ease;
     cursor: pointer;
     margin: 0;
 }
@@ -168,6 +168,77 @@ body.dark-mode.gallery-default .image-card {
 
 body.dark-mode.gallery-magazine .card-title {
     color: #ffffff;
+}
+
+/* Card transition animations */
+.card-fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.card-slide-to-first {
+    transform: translateX(0) translateY(0);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+}
+
+.card-disable-hover img {
+    transform: none !important;
+    transition: none !important;
+}
+
+.card-disable-hover .card-image::before {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.card-title-fade-out {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.card-fade-in {
+    opacity: 0;
+    animation: fadeInCard 0.2s ease-out forwards;
+}
+
+.card-fade-in-staggered {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInStaggered 0.3s ease-out forwards;
+}
+
+@keyframes fadeInCard {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInStaggered {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .photographer-card, .image-card {
+        transition: none;
+    }
+    
+    .card-fade-out,
+    .card-slide-to-first,
+    .card-title-fade-out,
+    .card-disable-hover,
+    .card-fade-in,
+    .card-fade-in-staggered {
+        transition: none;
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
 }
 
 .loading {
