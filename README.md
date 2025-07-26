@@ -119,7 +119,7 @@ photo-database-local-v4/
 - [ ] Consolidate inspection elements to single toggle
 - [x] Keyboard shortcuts
 - [ ] Refresh button
-- [ ] Image transitions
+- [x] Image transitions
 - [ ] Click to store RGB values
 - [ ] Grid spacing options in Preferences
 - [ ] Colour wheel overlay

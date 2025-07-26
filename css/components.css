@@ -179,7 +179,7 @@ body.dark-mode.gallery-magazine .card-title {
 
 .card-slide-to-first {
     transform: translateX(0) translateY(0);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.5s cubic-bezier(0.25, 1, 0.1, 1) !important;
     z-index: 10;
 }
 

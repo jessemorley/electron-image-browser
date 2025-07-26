@@ -999,7 +999,7 @@ class PhotographerBrowser {
             clickedCard.classList.add('card-slide-to-first');
             
             // Wait for slide animation to complete
-            setTimeout(resolve, 400);
+            setTimeout(resolve, 500);
         });
     }
 
