@@ -454,36 +454,6 @@ body.dark-mode .hex-toggle {
     object-fit: contain;
 }
 
-.viewer-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    color: white;
-    border: none;
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-    transition: background-color 0.2s;
-}
-
-.viewer-nav:hover {
-    background: rgba(255,255,255,0.2);
-    border-radius: 50%;
-}
-
-.viewer-prev {
-    left: 20px;
-}
-
-.viewer-next {
-    right: 20px;
-}
 
 .rgb-display {
     position: fixed;

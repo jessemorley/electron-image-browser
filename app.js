@@ -267,14 +267,7 @@ class PhotographerBrowser {
             }
         });
 
-        // Image viewer events
-        document.getElementById('viewerPrev').addEventListener('click', () => {
-            this.showPreviousImage();
-        });
-
-        document.getElementById('viewerNext').addEventListener('click', () => {
-            this.showNextImage();
-        });
+        // Image viewer events - arrow buttons removed, keeping keyboard navigation
 
         document.getElementById('eyedropperButton').addEventListener('click', () => {
             this.toggleEyedropper();
@@ -303,6 +296,10 @@ class PhotographerBrowser {
                     this.showPreviousImage();
                 } else if (e.key === 'ArrowRight') {
                     this.showNextImage();
+                } else if (e.key === 'h' || e.key === 'H') {
+                    this.toggleHistogram();
+                } else if (e.key === 'i' || e.key === 'I') {
+                    this.toggleEyedropper();
                 }
             } else if (document.getElementById('preferencesModal').classList.contains('active')) {
                 if (e.key === 'Escape') {
@@ -749,31 +746,39 @@ class PhotographerBrowser {
     }
 
     showPreviousImage() {
+        // Loop to last image if at first image
         if (this.currentImageIndex > 0) {
             this.currentImageIndex--;
-            const image = this.currentImages[this.currentImageIndex];
-            const viewerImage = document.getElementById('viewerImage');
-            viewerImage.src = `file://${image.path}`;
-            
-            // Refresh canvas when image loads
-            viewerImage.onload = () => {
-                this.setupCanvas();
-            };
+        } else {
+            this.currentImageIndex = this.currentImages.length - 1;
         }
+        
+        const image = this.currentImages[this.currentImageIndex];
+        const viewerImage = document.getElementById('viewerImage');
+        viewerImage.src = `file://${image.path}`;
+        
+        // Refresh canvas when image loads
+        viewerImage.onload = () => {
+            this.setupCanvas();
+        };
     }
 
     showNextImage() {
+        // Loop to first image if at last image
         if (this.currentImageIndex < this.currentImages.length - 1) {
             this.currentImageIndex++;
-            const image = this.currentImages[this.currentImageIndex];
-            const viewerImage = document.getElementById('viewerImage');
-            viewerImage.src = `file://${image.path}`;
-            
-            // Refresh canvas when image loads
-            viewerImage.onload = () => {
-                this.setupCanvas();
-            };
+        } else {
+            this.currentImageIndex = 0;
         }
+        
+        const image = this.currentImages[this.currentImageIndex];
+        const viewerImage = document.getElementById('viewerImage');
+        viewerImage.src = `file://${image.path}`;
+        
+        // Refresh canvas when image loads
+        viewerImage.onload = () => {
+            this.setupCanvas();
+        };
     }
 
     handleSearch(query) {

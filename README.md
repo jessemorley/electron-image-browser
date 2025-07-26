@@ -113,24 +113,17 @@ photo-database-local-v4/
 └── package.json         # Dependencies and scripts
 ```
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Author
-
-**Jesse Morley**
 
 ## To-Do
 
 - [ ] Consolidate inspection elements to single toggle
-- [ ] Keyboard shortcuts
+- [x] Keyboard shortcuts
 - [ ] Refresh button
 - [ ] Image transitions
 - [ ] Click to store RGB values
 - [ ] Grid spacing options in Preferences
 - [ ] Colour wheel overlay
-- [ ] Wrap image view behaviour
+- [x] Wrap image view behaviour
 
 ## Possible To-Do
 
