@@ -60,24 +60,24 @@ class PhotographerBrowser {
 
     activateHistogram() {
         this.histogramActive = true;
-        document.getElementById('histogramButton').classList.add('active');
-        document.getElementById('histogramDisplay').classList.add('active');
+        DOMHelper.activate('histogramButton');
+        DOMHelper.activate('histogramDisplay');
         
         // Generate histogram for current image
-        if (document.getElementById('viewerImage').src) {
+        if (DOMHelper.get('viewerImage').src) {
             this.generateHistogram();
         }
     }
 
     deactivateHistogram() {
         this.histogramActive = false;
-        document.getElementById('histogramButton').classList.remove('active');
-        document.getElementById('histogramDisplay').classList.remove('active');
+        DOMHelper.activate('histogramButton', false);
+        DOMHelper.activate('histogramDisplay', false);
         this.histogramData = null;
     }
 
     generateHistogram() {
-        const canvas = document.getElementById('viewerCanvas');
+        const canvas = DOMHelper.get('viewerCanvas');
         const ctx = canvas.getContext('2d');
         
         if (!canvas.width || !canvas.height) return;
@@ -97,7 +97,7 @@ class PhotographerBrowser {
                 const b = data[i + 2];
                 
                 // Calculate luminosity (ITU-R BT.709)
-                const luminosity = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+                const luminosity = Constants.calculateLuminosity(r, g, b);
                 histogram[luminosity]++;
                 totalPixels++;
             }
@@ -110,7 +110,7 @@ class PhotographerBrowser {
     }
 
     drawHistogram(histogram, totalPixels, luminosity = null) {
-        const canvas = document.getElementById('histogramCanvas');
+        const canvas = DOMHelper.get('histogramCanvas');
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
@@ -195,102 +195,102 @@ class PhotographerBrowser {
     }
 
     showInitialSetup() {
-        document.getElementById('initialSetup').classList.remove('hidden');
-        document.getElementById('appInterface').classList.add('hidden');
+        DOMHelper.showHide('initialSetup', true);
+        DOMHelper.showHide('appInterface', false);
     }
 
     showAppInterface() {
-        document.getElementById('initialSetup').classList.add('hidden');
-        document.getElementById('appInterface').classList.remove('hidden');
+        DOMHelper.showHide('initialSetup', false);
+        DOMHelper.showHide('appInterface', true);
     }
 
     bindEvents() {
         // Initial setup
-        document.getElementById('initialSelectButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('initialSelectButton', 'click', () => {
             this.selectFolder(true);
         });
 
         // Main interface
-        document.getElementById('backButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('backButton', 'click', () => {
             // Close image viewer if active, otherwise go back normally
-            if (document.getElementById('imageViewer').classList.contains('active')) {
+            if (DOMHelper.hasClass('imageViewer', 'active')) {
                 this.closeImageViewer();
             } else {
                 this.goBack();
             }
         });
 
-        document.getElementById('gearButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('gearButton', 'click', () => {
             this.openPreferences();
         });
 
-        document.getElementById('searchBar').addEventListener('input', (e) => {
+        DOMHelper.addEventListener('searchBar', 'input', (e) => {
             this.handleSearch(e.target.value);
         });
 
         // Preferences modal
-        document.getElementById('preferencesClose').addEventListener('click', () => {
+        DOMHelper.addEventListener('preferencesClose', 'click', () => {
             this.closePreferences();
         });
 
-        document.getElementById('changeFolderButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('changeFolderButton', 'click', () => {
             this.selectFolder(false);
         });
 
-        document.getElementById('resetFolderButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('resetFolderButton', 'click', () => {
             this.resetFolder();
         });
 
-        document.getElementById('themeSelector').addEventListener('change', async (e) => {
+        DOMHelper.addEventListener('themeSelector', 'change', async (e) => {
             const selectedTheme = e.target.value;
             this.currentTheme = selectedTheme;
             await window.electronAPI.setTheme(selectedTheme);
             this.applyTheme(selectedTheme);
         });
 
-        document.getElementById('hexToggle').addEventListener('change', async (e) => {
+        DOMHelper.addEventListener('hexToggle', 'change', async (e) => {
             const showHex = e.target.checked;
             await window.electronAPI.setShowHex(showHex);
             this.updateHexDisplay(showHex);
         });
 
-        document.getElementById('galleryStyleSelector').addEventListener('change', async (e) => {
+        DOMHelper.addEventListener('galleryStyleSelector', 'change', async (e) => {
             const selectedGalleryStyle = e.target.value;
             await window.electronAPI.setGalleryStyle(selectedGalleryStyle);
             this.applyGalleryStyle(selectedGalleryStyle);
         });
 
-        document.getElementById('confirmButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('confirmButton', 'click', () => {
             this.closePreferences();
         });
 
-        document.getElementById('preferencesModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('preferencesModal')) {
+        DOMHelper.addEventListener('preferencesModal', 'click', (e) => {
+            if (e.target === DOMHelper.get('preferencesModal')) {
                 this.closePreferences();
             }
         });
 
         // Image viewer events - arrow buttons removed, keeping keyboard navigation
 
-        document.getElementById('eyedropperButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('eyedropperButton', 'click', () => {
             this.toggleEyedropper();
         });
 
-        document.getElementById('histogramButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('histogramButton', 'click', () => {
             this.toggleHistogram();
         });
 
-        document.getElementById('revealFolderButton').addEventListener('click', () => {
+        DOMHelper.addEventListener('revealFolderButton', 'click', () => {
             this.revealInFinder();
         });
 
         // Histogram dragging events
         this.setupHistogramDragging();
 
-        document.getElementById('imageViewer').addEventListener('click', (e) => {
-            const viewerImage = document.getElementById('viewerImage');
-            const histogramDisplay = document.getElementById('histogramDisplay');
-            const rgbDisplay = document.getElementById('rgbDisplay');
+        DOMHelper.addEventListener('imageViewer', 'click', (e) => {
+            const viewerImage = DOMHelper.get('viewerImage');
+            const histogramDisplay = DOMHelper.get('histogramDisplay');
+            const rgbDisplay = DOMHelper.get('rgbDisplay');
             
             // Close if clicking outside the image, but not on histogram or RGB display
             if (e.target !== viewerImage && 
@@ -302,7 +302,7 @@ class PhotographerBrowser {
 
         // Keyboard events
         document.addEventListener('keydown', (e) => {
-            if (document.getElementById('imageViewer').classList.contains('active')) {
+            if (DOMHelper.hasClass('imageViewer', 'active')) {
                 if (e.key === 'Escape') {
                     this.closeImageViewer();
                 } else if (e.key === 'ArrowLeft') {
@@ -314,7 +314,7 @@ class PhotographerBrowser {
                 } else if (e.key === 'i' || e.key === 'I') {
                     this.toggleEyedropper();
                 }
-            } else if (document.getElementById('preferencesModal').classList.contains('active')) {
+            } else if (DOMHelper.hasClass('preferencesModal', 'active')) {
                 if (e.key === 'Escape') {
                     this.closePreferences();
                 }
@@ -347,37 +347,32 @@ class PhotographerBrowser {
     }
 
     openPreferences() {
-        document.getElementById('currentFolderPath').textContent = this.currentPath || 'No folder selected';
+        DOMHelper.setText('currentFolderPath', this.currentPath || 'No folder selected');
         
         // Set current theme in selector
         window.electronAPI.getTheme().then(theme => {
-            document.getElementById('themeSelector').value = theme;
+            DOMHelper.setValue('themeSelector', theme);
         });
         
         // Set current gallery style in selector
         window.electronAPI.getGalleryStyle().then(galleryStyle => {
-            document.getElementById('galleryStyleSelector').value = galleryStyle;
+            DOMHelper.setValue('galleryStyleSelector', galleryStyle);
         });
         
         // Set current hex toggle state
         window.electronAPI.getShowHex().then(showHex => {
-            document.getElementById('hexToggle').checked = showHex;
+            DOMHelper.setChecked('hexToggle', showHex);
         });
         
-        document.getElementById('preferencesModal').classList.add('active');
+        DOMHelper.activate('preferencesModal');
     }
 
     closePreferences() {
-        document.getElementById('preferencesModal').classList.remove('active');
+        DOMHelper.activate('preferencesModal', false);
     }
 
     updateHexDisplay(showHex) {
-        const hexValue = document.getElementById('hexValue');
-        if (showHex) {
-            hexValue.classList.add('visible');
-        } else {
-            hexValue.classList.remove('visible');
-        }
+        DOMHelper.setVisible('hexValue', showHex);
     }
 
     async initializeHexDisplay() {
@@ -394,14 +389,14 @@ class PhotographerBrowser {
         this.showLoading(true);
         this.hideBackButton();
         
-        document.getElementById('currentPath').textContent = this.currentPath;
-        document.getElementById('searchBar').value = '';
+        DOMHelper.setText('currentPath', this.currentPath);
+        DOMHelper.setValue('searchBar', '');
         
         // Update search context to photographer search
         this.updateSearchContext(false);
         
         // Hide reveal folder button for photographer list view
-        document.getElementById('revealFolderButton').classList.add('hidden');
+        DOMHelper.showHide('revealFolderButton', false);
 
         try {
             this.photographers = await window.electronAPI.getPhotographers(this.currentPath);
@@ -419,14 +414,14 @@ class PhotographerBrowser {
         this.currentPhotographer = photographer;
         this.showBackButton();
         
-        document.getElementById('currentPath').textContent = `${this.currentPath} > ${photographer.name}`;
-        document.getElementById('searchBar').value = '';
+        DOMHelper.setText('currentPath', `${this.currentPath} > ${photographer.name}`);
+        DOMHelper.setValue('searchBar', '');
         
         // Update search context to photographer view
         this.updateSearchContext(true, photographer.name);
         
         // Show reveal folder button for photographer view
-        document.getElementById('revealFolderButton').classList.remove('hidden');
+        DOMHelper.showHide('revealFolderButton', true);
 
         try {
             this.currentImages = await window.electronAPI.getImages(photographer.path);
@@ -459,10 +454,10 @@ class PhotographerBrowser {
             // Phase 5: Load images and update UI state
             this.currentPhotographer = photographer;
             this.showBackButton();
-            document.getElementById('currentPath').textContent = `${this.currentPath} > ${photographer.name}`;
-            document.getElementById('searchBar').value = '';
+            DOMHelper.setText('currentPath', `${this.currentPath} > ${photographer.name}`);
+            DOMHelper.setValue('searchBar', '');
             this.updateSearchContext(true, photographer.name);
-            document.getElementById('revealFolderButton').classList.remove('hidden');
+            DOMHelper.showHide('revealFolderButton', true);
             
             // Load images data
             this.currentImages = await window.electronAPI.getImages(photographer.path);
@@ -480,7 +475,7 @@ class PhotographerBrowser {
     }
 
     renderPhotographers() {
-        const grid = document.getElementById('contentGrid');
+        const grid = DOMHelper.get('contentGrid');
         grid.innerHTML = '';
 
         if (this.filteredPhotographers.length === 0) {
@@ -497,7 +492,7 @@ class PhotographerBrowser {
     }
 
     renderImages() {
-        const grid = document.getElementById('contentGrid');
+        const grid = DOMHelper.get('contentGrid');
         grid.innerHTML = '';
 
         if (this.currentImages.length === 0) {
@@ -611,20 +606,20 @@ class PhotographerBrowser {
     openImageViewer(index) {
         this.currentImageIndex = index;
         const image = this.currentImages[index];
-        const viewerImage = document.getElementById('viewerImage');
+        const viewerImage = DOMHelper.get('viewerImage');
         viewerImage.src = `file://${image.path}`;
         
         // Show reveal folder, eyedropper, and histogram buttons in menu
-        document.getElementById('revealFolderButton').classList.remove('hidden');
-        document.getElementById('eyedropperButton').classList.remove('hidden');
-        document.getElementById('histogramButton').classList.remove('hidden');
+        DOMHelper.showHide('revealFolderButton', true);
+        DOMHelper.showHide('eyedropperButton', true);
+        DOMHelper.showHide('histogramButton', true);
         
         // Setup canvas when image loads
         viewerImage.onload = () => {
             this.setupCanvas();
         };
         
-        document.getElementById('imageViewer').classList.add('active');
+        DOMHelper.activate('imageViewer');
         
         // Restore persistent states
         if (this.persistentEyedropper) {
@@ -636,11 +631,11 @@ class PhotographerBrowser {
     }
 
     closeImageViewer() {
-        document.getElementById('imageViewer').classList.remove('active');
+        DOMHelper.activate('imageViewer', false);
         
         // Hide eyedropper and histogram buttons in menu (keep reveal folder visible)
-        document.getElementById('eyedropperButton').classList.add('hidden');
-        document.getElementById('histogramButton').classList.add('hidden');
+        DOMHelper.showHide('eyedropperButton', false);
+        DOMHelper.showHide('histogramButton', false);
         
         this.deactivateEyedropper();
         this.deactivateHistogram();
@@ -648,7 +643,7 @@ class PhotographerBrowser {
 
     async revealInFinder() {
         // Check if we're viewing a single image
-        const imageViewerActive = document.getElementById('imageViewer').classList.contains('active');
+        const imageViewerActive = DOMHelper.hasClass('imageViewer', 'active');
         
         if (imageViewerActive && this.currentImages && this.currentImages[this.currentImageIndex]) {
             // Reveal the specific image file
@@ -682,8 +677,8 @@ class PhotographerBrowser {
     }
 
     setupCanvas() {
-        const viewerImage = document.getElementById('viewerImage');
-        const canvas = document.getElementById('viewerCanvas');
+        const viewerImage = DOMHelper.get('viewerImage');
+        const canvas = DOMHelper.get('viewerCanvas');
         const ctx = canvas.getContext('2d');
         
         // Set canvas size to match displayed image
@@ -719,10 +714,10 @@ class PhotographerBrowser {
 
     activateEyedropper() {
         this.eyedropperActive = true;
-        document.getElementById('eyedropperButton').classList.add('active');
-        document.getElementById('rgbDisplay').classList.add('active');
+        DOMHelper.activate('eyedropperButton');
+        DOMHelper.activate('rgbDisplay');
         
-        const viewerImage = document.getElementById('viewerImage');
+        const viewerImage = DOMHelper.get('viewerImage');
         viewerImage.style.cursor = 'crosshair';
         
         // Add mouse move listener
@@ -732,10 +727,10 @@ class PhotographerBrowser {
 
     deactivateEyedropper() {
         this.eyedropperActive = false;
-        document.getElementById('eyedropperButton').classList.remove('active');
-        document.getElementById('rgbDisplay').classList.remove('active');
+        DOMHelper.activate('eyedropperButton', false);
+        DOMHelper.activate('rgbDisplay', false);
         
-        const viewerImage = document.getElementById('viewerImage');
+        const viewerImage = DOMHelper.get('viewerImage');
         viewerImage.style.cursor = 'default';
         
         // Remove mouse move listener
@@ -751,8 +746,8 @@ class PhotographerBrowser {
     }
 
     handleMouseMove(e) {
-        const viewerImage = document.getElementById('viewerImage');
-        const canvas = document.getElementById('viewerCanvas');
+        const viewerImage = DOMHelper.get('viewerImage');
+        const canvas = DOMHelper.get('viewerCanvas');
         const ctx = canvas.getContext('2d');
         
         // Get mouse position relative to image
@@ -775,23 +770,20 @@ class PhotographerBrowser {
             const b = data[2];
             
             // Calculate luminosity (ITU-R BT.709)
-            const luminosity = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+            const luminosity = Constants.calculateLuminosity(r, g, b);
             
             // Store current luminosity for histogram line
             this.currentLuminosity = luminosity;
             
             // Convert to hex
-            const hex = '#' + [r, g, b].map(x => {
-                const hexValue = x.toString(16);
-                return hexValue.length === 1 ? '0' + hexValue : hexValue;
-            }).join('').toUpperCase();
+            const hex = Constants.rgbToHex(r, g, b);
             
             // Update RGB display - colors are now fixed via CSS classes
-            document.getElementById('rValue').textContent = r;
-            document.getElementById('gValue').textContent = g;
-            document.getElementById('bValue').textContent = b;
-            document.getElementById('lValue').textContent = luminosity;
-            document.getElementById('hexValue').textContent = hex;
+            DOMHelper.setText('rValue', r);
+            DOMHelper.setText('gValue', g);
+            DOMHelper.setText('bValue', b);
+            DOMHelper.setText('lValue', luminosity);
+            DOMHelper.setText('hexValue', hex);
             
             // Redraw histogram with luminosity line if histogram is active
             if (this.histogramActive && this.histogramData) {
@@ -809,7 +801,7 @@ class PhotographerBrowser {
         }
         
         const image = this.currentImages[this.currentImageIndex];
-        const viewerImage = document.getElementById('viewerImage');
+        const viewerImage = DOMHelper.get('viewerImage');
         viewerImage.src = `file://${image.path}`;
         
         // Refresh canvas when image loads
@@ -827,7 +819,7 @@ class PhotographerBrowser {
         }
         
         const image = this.currentImages[this.currentImageIndex];
-        const viewerImage = document.getElementById('viewerImage');
+        const viewerImage = DOMHelper.get('viewerImage');
         viewerImage.src = `file://${image.path}`;
         
         // Refresh canvas when image loads
@@ -859,7 +851,7 @@ class PhotographerBrowser {
             // Update search context back to photographer search
             this.updateSearchContext(false);
             // Hide reveal folder button
-            document.getElementById('revealFolderButton').classList.add('hidden');
+            DOMHelper.showHide('revealFolderButton', false);
             
             // Reset animation state and clean up any animation classes
             this.isAnimating = false;
@@ -897,23 +889,23 @@ class PhotographerBrowser {
     }
 
     showBackButton() {
-        document.getElementById('backButton').classList.add('visible');
+        DOMHelper.setVisible('backButton');
     }
 
     hideBackButton() {
-        document.getElementById('backButton').classList.remove('visible');
+        DOMHelper.setVisible('backButton', false);
     }
 
     showLoading(show) {
-        document.getElementById('loadingMessage').classList.toggle('hidden', !show);
+        DOMHelper.showHide('loadingMessage', show);
     }
 
     showNoResults(show) {
-        document.getElementById('noResults').classList.toggle('hidden', !show);
+        DOMHelper.showHide('noResults', show);
     }
 
     setupHistogramDragging() {
-        const histogramDisplay = document.getElementById('histogramDisplay');
+        const histogramDisplay = DOMHelper.get('histogramDisplay');
         
         histogramDisplay.addEventListener('mousedown', (e) => {
             this.isDragging = true;
@@ -1011,7 +1003,7 @@ class PhotographerBrowser {
     }
 
     async renderImagesAnimated() {
-        const grid = document.getElementById('contentGrid');
+        const grid = DOMHelper.get('contentGrid');
         grid.innerHTML = '';
 
         if (this.currentImages.length === 0) {

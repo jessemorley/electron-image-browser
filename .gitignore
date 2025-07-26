@@ -38,3 +38,6 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+# Claude AI memory files
+CLAUDE.md

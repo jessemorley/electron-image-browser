@@ -3,6 +3,9 @@ const path = require('path');
 const fs = require('fs').promises;
 const Store = require('electron-store');
 
+// Shared constants
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'];
+
 const store = new Store();
 
 let mainWindow;
@@ -151,12 +154,11 @@ ipcMain.handle('get-images', async (event, folderPath) => {
   try {
     const items = await fs.readdir(folderPath, { withFileTypes: true });
     const images = [];
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'];
     
     for (const item of items) {
       if (item.isFile()) {
         const ext = path.extname(item.name).toLowerCase();
-        if (imageExtensions.includes(ext)) {
+        if (IMAGE_EXTENSIONS.includes(ext)) {
           images.push({
             name: item.name,
             path: path.join(folderPath, item.name)
@@ -175,12 +177,11 @@ ipcMain.handle('get-images', async (event, folderPath) => {
 async function getPreviewImage(folderPath) {
   try {
     const items = await fs.readdir(folderPath, { withFileTypes: true });
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff'];
     
     for (const item of items) {
       if (item.isFile()) {
         const ext = path.extname(item.name).toLowerCase();
-        if (imageExtensions.includes(ext)) {
+        if (IMAGE_EXTENSIONS.includes(ext)) {
           return path.join(folderPath, item.name);
         }
       }
