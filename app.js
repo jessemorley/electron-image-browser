@@ -13,6 +13,8 @@ class PhotographerBrowser {
         this.histogramData = null;
         this.currentLuminosity = null;
         this.currentGalleryStyle = 'default'; // Initialize with default style
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
         this.init();
     }
 
@@ -280,6 +282,9 @@ class PhotographerBrowser {
         document.getElementById('revealFolderButton').addEventListener('click', () => {
             this.revealInFinder();
         });
+
+        // Histogram dragging events
+        this.setupHistogramDragging();
 
         document.getElementById('imageViewer').addEventListener('click', (e) => {
             if (e.target === document.getElementById('imageViewer')) {
@@ -823,6 +828,46 @@ class PhotographerBrowser {
 
     showNoResults(show) {
         document.getElementById('noResults').classList.toggle('hidden', !show);
+    }
+
+    setupHistogramDragging() {
+        const histogramDisplay = document.getElementById('histogramDisplay');
+        
+        histogramDisplay.addEventListener('mousedown', (e) => {
+            this.isDragging = true;
+            const rect = histogramDisplay.getBoundingClientRect();
+            this.dragOffset.x = e.clientX - rect.left;
+            this.dragOffset.y = e.clientY - rect.top;
+            
+            // Prevent text selection and image dragging
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            
+            e.preventDefault();
+            
+            const newX = e.clientX - this.dragOffset.x;
+            const newY = e.clientY - this.dragOffset.y;
+            
+            // Keep histogram within viewport bounds
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const histogramRect = histogramDisplay.getBoundingClientRect();
+            
+            const constrainedX = Math.max(0, Math.min(newX, viewportWidth - histogramRect.width));
+            const constrainedY = Math.max(0, Math.min(newY, viewportHeight - histogramRect.height));
+            
+            histogramDisplay.style.left = constrainedX + 'px';
+            histogramDisplay.style.top = constrainedY + 'px';
+            histogramDisplay.style.right = 'auto';
+            histogramDisplay.style.bottom = 'auto';
+        });
+
+        document.addEventListener('mouseup', () => {
+            this.isDragging = false;
+        });
     }
 }
 

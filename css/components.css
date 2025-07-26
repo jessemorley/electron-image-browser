@@ -488,6 +488,8 @@ body.dark-mode .hex-toggle {
     z-index: 1001;
     display: none;
     min-width: 256px;
+    cursor: move;
+    user-select: none;
 }
 
 .histogram-display.active {
