@@ -8,9 +8,7 @@
     padding: 0;
 }
 
-/* Default gallery style - clean overlay style */
-.gallery-default .photographer-card, 
-.gallery-default .image-card {
+.photographer-card, .image-card {
     background: white;
     border-radius: 0;
     overflow: hidden;
@@ -20,56 +18,17 @@
     margin: 0;
 }
 
-/* Magazine gallery style - grid with borders */
-.gallery-magazine .photographer-card, 
-.gallery-magazine .image-card {
-    background: white;
-    border-radius: 0;
-    overflow: hidden;
-    box-shadow: none;
-    border: 1px solid black;
-    border-right: none;
-    border-bottom: none;
-    transition: background-color 0.3s, transform 0.1s ease;
-    cursor: pointer;
-    margin: 0;
-}
-
-/* Magazine gallery style borders */
-.gallery-magazine .photographer-card:last-child,
-.gallery-magazine .image-card:last-child {
-    border-right: 1px solid black;
-}
-
-.gallery-magazine .grid .photographer-card:nth-last-child(-n+4),
-.gallery-magazine .grid .image-card:nth-last-child(-n+4) {
-    border-bottom: 1px solid black;
-}
-
-body.dark-mode.gallery-magazine .photographer-card,
-body.dark-mode.gallery-magazine .image-card {
-    background: #222222;
-    border-color: white;
-}
-
-body.dark-mode.gallery-magazine .photographer-card:last-child,
-body.dark-mode.gallery-magazine .image-card:last-child {
-    border-right-color: white;
-}
-
-body.dark-mode.gallery-magazine .grid .photographer-card:nth-last-child(-n+4),
-body.dark-mode.gallery-magazine .grid .image-card:nth-last-child(-n+4) {
-    border-bottom-color: white;
-}
-
-/* Default gallery style dark mode */
-body.dark-mode.gallery-default .photographer-card,
-body.dark-mode.gallery-default .image-card {
+body.dark-mode .photographer-card,
+body.dark-mode .image-card {
     background: #222222;
 }
 
 .photographer-card:hover, .image-card:hover {
     box-shadow: none;
+}
+
+.photographer-card:hover .card-title {
+    color: rgba(224, 224, 224, 0.98);
 }
 
 .card-image {
@@ -83,10 +42,6 @@ body.dark-mode.gallery-default .image-card {
     color: #999;
     font-size: 14px;
     overflow: hidden;
-}
-
-/* Default style card image positioning */
-.gallery-default .card-image {
     position: relative;
 }
 
@@ -97,18 +52,11 @@ body.dark-mode.gallery-default .image-card {
     transition: transform 0.3s ease;
 }
 
-/* Default style image hover effects */
-.gallery-default .photographer-card:hover .card-image img {
+.photographer-card:hover .card-image img {
     transform: scale(1.03);
 }
 
-/* Magazine style image hover effects */
-.gallery-magazine .photographer-card:hover .card-image img {
-    transform: scale(1.05);
-}
-
-/* Default gallery style card titles - overlay style */
-.gallery-default .photographer-card .card-image::before {
+.photographer-card .card-image::before {
     content: '';
     position: absolute;
     bottom: 0;
@@ -123,7 +71,7 @@ body.dark-mode.gallery-default .image-card {
     z-index: 1;
 }
 
-.gallery-default .photographer-card .card-title {
+.photographer-card .card-title {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -143,31 +91,13 @@ body.dark-mode.gallery-default .image-card {
     z-index: 2;
 }
 
-.gallery-default .photographer-card:hover .card-title {
-    color: rgba(224, 224, 224, 0.98);
-}
-
-.gallery-default .image-card .card-title {
+.image-card .card-title {
     padding: 15px;
     font-size: 16px;
     font-weight: 700;
     text-align: center;
     text-transform: uppercase;
     transition: color 0.3s;
-}
-
-/* Magazine gallery style card titles - simple below image */
-.gallery-magazine .card-title {
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 700;
-    text-align: center;
-    text-transform: uppercase;
-    transition: color 0.3s;
-}
-
-body.dark-mode.gallery-magazine .card-title {
-    color: #ffffff;
 }
 
 .loading {
@@ -320,22 +250,6 @@ body.dark-mode.gallery-magazine .card-title {
     border-color: #007AFF;
 }
 
-.gallery-style-selector {
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 14px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    background: white;
-    color: #333;
-    cursor: pointer;
-    outline: none;
-}
-
-.gallery-style-selector:focus {
-    border-color: #007AFF;
-}
-
 body.dark-mode .theme-selector {
     background: #333333;
     color: #ffffff;
@@ -343,16 +257,6 @@ body.dark-mode .theme-selector {
 }
 
 body.dark-mode .theme-selector:focus {
-    border-color: #007AFF;
-}
-
-body.dark-mode .gallery-style-selector {
-    background: #333333;
-    color: #ffffff;
-    border-color: #555555;
-}
-
-body.dark-mode .gallery-style-selector:focus {
     border-color: #007AFF;
 }
 

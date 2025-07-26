@@ -108,6 +108,15 @@ ipcMain.handle('set-histogram-active', (event, active) => {
   return true;
 });
 
+ipcMain.handle('get-gallery-style', () => {
+  return store.get('galleryStyle', 'default');
+});
+
+ipcMain.handle('set-gallery-style', (event, galleryStyle) => {
+  store.set('galleryStyle', galleryStyle);
+  return true;
+});
+
 ipcMain.handle('reveal-in-finder', (event, filePath) => {
   shell.showItemInFolder(filePath);
   return true;

@@ -14,5 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setEyedropperActive: (active) => ipcRenderer.invoke('set-eyedropper-active', active),
   getHistogramActive: () => ipcRenderer.invoke('get-histogram-active'),
   setHistogramActive: (active) => ipcRenderer.invoke('set-histogram-active', active),
+  getGalleryStyle: () => ipcRenderer.invoke('get-gallery-style'),
+  setGalleryStyle: (galleryStyle) => ipcRenderer.invoke('set-gallery-style', galleryStyle),
   revealInFinder: (filePath) => ipcRenderer.invoke('reveal-in-finder', filePath)
 });

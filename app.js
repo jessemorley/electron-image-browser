@@ -12,6 +12,7 @@ class PhotographerBrowser {
         this.persistentHistogram = false;
         this.histogramData = null;
         this.currentLuminosity = null;
+        this.currentGalleryStyle = 'default'; // Initialize with default style
         this.init();
     }
 
@@ -21,6 +22,7 @@ class PhotographerBrowser {
         await this.initializeHexDisplay();
         await this.initializeEyedropperState();
         await this.initializeHistogramState();
+        await this.initializeGalleryStyle();
         await this.checkStoredFolder();
     }
 
@@ -249,6 +251,12 @@ class PhotographerBrowser {
             this.updateHexDisplay(showHex);
         });
 
+        document.getElementById('galleryStyleSelector').addEventListener('change', async (e) => {
+            const selectedGalleryStyle = e.target.value;
+            await window.electronAPI.setGalleryStyle(selectedGalleryStyle);
+            this.applyGalleryStyle(selectedGalleryStyle);
+        });
+
         document.getElementById('confirmButton').addEventListener('click', () => {
             this.closePreferences();
         });
@@ -334,6 +342,11 @@ class PhotographerBrowser {
         // Set current theme in selector
         window.electronAPI.getTheme().then(theme => {
             document.getElementById('themeSelector').value = theme;
+        });
+        
+        // Set current gallery style in selector
+        window.electronAPI.getGalleryStyle().then(galleryStyle => {
+            document.getElementById('galleryStyleSelector').value = galleryStyle;
         });
         
         // Set current hex toggle state
@@ -469,8 +482,16 @@ class PhotographerBrowser {
         title.className = 'card-title';
         title.textContent = photographer.name;
         
-        card.appendChild(imageDiv);
-        card.appendChild(title);
+        // Check if we're using default style (overlay) and place title accordingly
+        if (this.currentGalleryStyle === 'default') {
+            // For default style (overlay), place title inside image container
+            imageDiv.appendChild(title);
+            card.appendChild(imageDiv);
+        } else {
+            // For magazine style, place title below image
+            card.appendChild(imageDiv);
+            card.appendChild(title);
+        }
         
         card.addEventListener('click', () => {
             this.loadPhotographerImages(photographer);
@@ -505,6 +526,34 @@ class PhotographerBrowser {
     async initializeHistogramState() {
         const histogramActive = await window.electronAPI.getHistogramActive();
         this.persistentHistogram = histogramActive;
+    }
+
+    async initializeGalleryStyle() {
+        const savedGalleryStyle = await window.electronAPI.getGalleryStyle();
+        this.currentGalleryStyle = savedGalleryStyle;
+        this.applyGalleryStyle(savedGalleryStyle);
+    }
+
+    applyGalleryStyle(galleryStyle) {
+        const body = document.body;
+        
+        // Remove existing gallery style classes
+        body.classList.remove('gallery-default', 'gallery-magazine');
+        
+        // Apply the selected gallery style
+        if (galleryStyle === 'default') {
+            body.classList.add('gallery-default');
+        } else if (galleryStyle === 'magazine') {
+            body.classList.add('gallery-magazine');
+        }
+        
+        // Store the current gallery style
+        this.currentGalleryStyle = galleryStyle;
+        
+        // Re-render photographers if we're currently viewing them
+        if (!this.currentPhotographer && this.photographers && this.photographers.length > 0) {
+            this.renderPhotographers();
+        }
     }
 
     openImageViewer(index) {
